@@ -1350,7 +1350,7 @@ Use my Invite Code: USER123</textarea>
   let storedReferrerCode = "";
   let inviteListeners = [];
 
-  // Show Loader & Play Audio ONCE on Page Reload
+  // Show Loader & Play Audio ONCE on Page Load (Beginning)
   function showLoader() {
     const loader = document.getElementById('loadingScreen');
     const audio = document.getElementById('loadingAudio');
@@ -1375,8 +1375,6 @@ Use my Invite Code: USER123</textarea>
     if (loader) {
       loader.classList.add('fade-out');
     }
-    // Note: We do NOT pause or reset 'loadingAudio' here anymore, 
-    // so it will continue playing until it ends on its own.
   }
 
   function clearInviteListeners() {
@@ -1890,7 +1888,8 @@ Use my Invite Code: USER123</textarea>
     try {
       clearInviteListeners();
       await signOut(auth);
-      window.location.reload();
+      // window.location.reload() has been removed here so logging out 
+      // won't refresh the page or trigger the loader/audio again.
     } catch (error) {
       console.error("Logout Error:", error);
     }
@@ -1964,7 +1963,7 @@ Use my Invite Code: USER123</textarea>
     }
   };
 
-  // Trigger loader and play audio on reload
+  // Trigger loader and play audio on initial page load (beginning)
   showLoader();
   updateActivationUI();
 </script>
