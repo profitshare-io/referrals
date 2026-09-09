@@ -1451,6 +1451,39 @@ Use my Invite Code: USER123</textarea>
     }
   });
 
+
+// Expose auth form submission globally to match HTML onsubmit handler
+  window.handleAuthSubmit = async function(event) {
+    event.preventDefault();
+
+    if (currentMode === 'signin') {
+      const phone = document.getElementById("authPhone").value.trim();
+      const password = document.getElementById("authPassword").value.trim();
+
+      if (!phone || !password) {
+        alert("Please enter both phone number and password.");
+        return;
+      }
+
+      try {
+        const firebaseEmail = formatPhoneToFirebaseEmail(phone);
+        await signInWithEmailAndPassword(auth, firebaseEmail, password);
+        alert("🎉 Successfully signed in!");
+        closeAuthModal();
+      } catch (error) {
+        console.error("Sign In Error:", error);
+        alert("Sign In Failed: " + error.message);
+      }
+    } 
+    else if (currentMode === 'signup-step1') {
+      await checkInviterCode();
+    } 
+    else if (currentMode === 'signup-step2') {
+      await handleFinalRegistration();
+    }
+  };
+
+  
   // Updated Activation UI Function (Accepts status directly from Firebase)
   window.updateActivationUI = function(activeStatus) {
     if (typeof activeStatus === 'boolean') {
