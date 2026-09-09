@@ -1022,7 +1022,9 @@
   </style>
 </head>
 <body>
-
+<audio id="loadingAudio" loop>
+  <source src="prism-at-dawn_nz93e9EZ.mp3" type="audio/mpeg">
+</audio>
   <!-- LOADING PAGE SPLASH SCREEN -->
   <div id="loadingScreen">
     <div class="loader-logo-container">
@@ -1348,11 +1350,33 @@ Use my Invite Code: USER123</textarea>
   let storedReferrerCode = "";
   let inviteListeners = [];
 
+  // Show Loader & Play Audio ONCE on Page Reload
+  function showLoader() {
+    const loader = document.getElementById('loadingScreen');
+    const audio = document.getElementById('loadingAudio');
+    
+    if (loader) {
+      loader.classList.remove('fade-out');
+    }
+    
+    if (audio) {
+      audio.loop = false; 
+      audio.currentTime = 0;
+      audio.play().catch(err => {
+        console.log("Audio autoplay blocked by browser policy until interaction:", err);
+      });
+    }
+  }
+
+  // Hide Loader ONLY (Leaves audio playing until it finishes naturally)
   function hideLoader() {
     const loader = document.getElementById('loadingScreen');
+    
     if (loader) {
       loader.classList.add('fade-out');
     }
+    // Note: We do NOT pause or reset 'loadingAudio' here anymore, 
+    // so it will continue playing until it ends on its own.
   }
 
   function clearInviteListeners() {
@@ -1385,36 +1409,29 @@ Use my Invite Code: USER123</textarea>
   }
 
   // Real-time Authentication & Profile State Watcher
-// Real-time Authentication & Profile State Watcher
   onAuthStateChanged(auth, (user) => {
     if (user) {
       currentUserId = user.uid;
       const userRef = ref(db, `users/${currentUserId}`);
       
-      onValue(userRef, async (snapshot) => { // Added async here
+      onValue(userRef, async (snapshot) => {
         if (snapshot.exists()) {
           const userData = snapshot.val();
           
-          // 1. Read 'isActivated' dynamically from Firebase Database
           isActivated = Boolean(userData.isActivated);
           
-          // 2. Update UI elements according to Firebase status
           setLoggedInUserReal(userData.name, userData.balance, userData.myCode);
           updateActivationUI(isActivated);
 
-          // Sync Profile Card details inside Earnings Modal
           updateProfileModalData(userData);
 
-          // Render Live Invites
           const invitesArr = userData.invites ? Object.values(userData.invites) : [];
           renderInvitesList(invitesArr);
           
-          // Render Live Payouts
           const payoutsArr = userData.payouts ? Object.values(userData.payouts) : [];
           renderPayoutsList(payoutsArr);
         }
         
-        // ---> CHECK FOR PENDING ACTIVATION ON RELOAD <---
         try {
           const requestSnap = await get(ref(db, `activationRequests/${currentUserId}`));
           if (requestSnap.exists()) {
@@ -1440,7 +1457,6 @@ Use my Invite Code: USER123</textarea>
       setLoggedInUserReal(null, 0, null);
       updateActivationUI(false);
       
-      // Clear status display on logout/reload if logged out
       const statusDisplay = document.getElementById("manualStatusDisplay");
       if (statusDisplay) {
         statusDisplay.style.display = "none";
@@ -1451,8 +1467,6 @@ Use my Invite Code: USER123</textarea>
     }
   });
 
-
-// Expose auth form submission globally to match HTML onsubmit handler
   window.handleAuthSubmit = async function(event) {
     event.preventDefault();
 
@@ -1468,7 +1482,6 @@ Use my Invite Code: USER123</textarea>
       try {
         const firebaseEmail = formatPhoneToFirebaseEmail(phone);
         await signInWithEmailAndPassword(auth, firebaseEmail, password);
-        alert("🎉 Successfully signed in!");
         closeAuthModal();
       } catch (error) {
         console.error("Sign In Error:", error);
@@ -1483,8 +1496,6 @@ Use my Invite Code: USER123</textarea>
     }
   };
 
-  
-  // Updated Activation UI Function (Accepts status directly from Firebase)
   window.updateActivationUI = function(activeStatus) {
     if (typeof activeStatus === 'boolean') {
       isActivated = activeStatus;
@@ -1511,7 +1522,6 @@ Use my Invite Code: USER123</textarea>
     }
   };
 
-  // Populate Profile Modal
   function updateProfileModalData(userData) {
     const name = userData.name || "User Name";
     const mpesa = userData.mpesaNumber || "Not set";
@@ -1525,7 +1535,6 @@ Use my Invite Code: USER123</textarea>
     if (mpesaDisplayEl) mpesaDisplayEl.innerText = mpesa;
   }
 
-  // Toggle Edit Mode & Save M-Pesa Number to Realtime Database
   window.toggleMpesaEdit = async function() {
     const displayEl = document.getElementById('mpesaDisplay');
     const inputEl = document.getElementById('mpesaInput');
@@ -1570,7 +1579,6 @@ Use my Invite Code: USER123</textarea>
     }
   };
 
-  // Render Payouts List
   function renderPayoutsList(payoutsArray) {
     const payoutsTabContent = document.getElementById("payoutsTabContent");
     if (!payoutsTabContent) return;
@@ -1645,7 +1653,7 @@ Use my Invite Code: USER123</textarea>
     }
   };
 
-window.submitManualActivation = async function() {
+  window.submitManualActivation = async function() {
     const paidPhone = document.getElementById("paidPhoneNumber").value.trim();
     
     if (!paidPhone || paidPhone.length < 10) {
@@ -1676,7 +1684,7 @@ window.submitManualActivation = async function() {
 
       const requestRef = ref(db, `activationRequests/${currentUserId}`);
       
-await set(requestRef, {
+      await set(requestRef, {
         uid: currentUserId,
         userName: userData.name || "N/A",
         userPhone: userData.phone || "N/A",
@@ -1686,7 +1694,6 @@ await set(requestRef, {
         requestedAt: new Date().toISOString()
       });
 
-      // ---> DISPLAY THE ENTERED NUMBER IMMEDIATELY <---
       const statusDisplay = document.getElementById("manualStatusDisplay");
       if (statusDisplay) {
         statusDisplay.innerText = `${paidPhone} pending for activation`;
@@ -1879,14 +1886,11 @@ await set(requestRef, {
     }
   }
 
-
-
   window.logoutUser = async function() {
     try {
       clearInviteListeners();
       await signOut(auth);
-      document.getElementById("dropdownMenu").classList.remove("show");
-      updateProfileModalData({ name: "User Name", mpesaNumber: "Not set" });
+      window.location.reload();
     } catch (error) {
       console.error("Logout Error:", error);
     }
@@ -1900,7 +1904,6 @@ await set(requestRef, {
       document.getElementById('userName').innerText = truncateWords(name, 5);
       document.getElementById('userBalance').innerText = balance || 0;
 
-      // Dynamically update the referral message box with the user's actual code
       if (refMessageEl) {
         const userCodeToUse = code || 'YOUR_CODE';
         refMessageEl.value = `Hi! 👋 Join Profits Share today and start earning extra income daily. \n\nClick here to sign up: https://profits-share.web.app/signup\nUse my Invite Code: ${userCodeToUse}`;
@@ -1911,7 +1914,6 @@ await set(requestRef, {
       document.getElementById('userBalance').innerText = '0';
       isActivated = false;
 
-      // Reset textarea placeholder if logged out
       if (refMessageEl) {
         refMessageEl.value = `Hi! 👋 Join Profits Share today and start earning extra income daily. \n\nClick here to sign up: https://profits-share.web.app/signup\nUse my Invite Code: USER123`;
       }
@@ -1962,6 +1964,8 @@ await set(requestRef, {
     }
   };
 
+  // Trigger loader and play audio on reload
+  showLoader();
   updateActivationUI();
 </script>
 </body>
