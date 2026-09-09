@@ -1520,6 +1520,42 @@ Use my Invite Code: USER123</textarea>
     }
   };
 
+  // Show Loader & Play Audio ONLY ONCE per browser session
+  function showLoader() {
+    // Check if we already showed the loader in this browser tab session
+    if (sessionStorage.getItem("loaderPlayed") === "true") {
+      const loader = document.getElementById('loadingScreen');
+      if (loader) loader.style.display = 'none'; // Hide immediately if already played
+      return;
+    }
+
+    sessionStorage.setItem("loaderPlayed", "true");
+
+    const loader = document.getElementById('loadingScreen');
+    const audio = document.getElementById('loadingAudio');
+    
+    if (loader) {
+      loader.classList.remove('fade-out');
+    }
+    
+    if (audio) {
+      audio.loop = false; 
+      audio.currentTime = 0;
+      audio.play().catch(err => {
+        console.log("Audio autoplay blocked by browser policy (Standard browser behavior). Will play on first user interaction.");
+        
+        // Optional fallback: Play audio on the user's very first click anywhere on the page
+        const unlockAudio = () => {
+          audio.play().catch(() => {});
+          window.removeEventListener('click', unlockAudio);
+          window.removeEventListener('keydown', unlockAudio);
+        };
+        window.addEventListener('click', unlockAudio);
+        window.addEventListener('keydown', unlockAudio);
+      });
+    }
+  }
+
   function updateProfileModalData(userData) {
     const name = userData.name || "User Name";
     const mpesa = userData.mpesaNumber || "Not set";
