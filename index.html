@@ -1350,21 +1350,31 @@ Use my Invite Code: USER123</textarea>
   let storedReferrerCode = "";
   let inviteListeners = [];
 
-  // Show Loader & Play Audio ONCE on Page Load (Beginning)
-  function showLoader() {
+  // Show Loader & Play Audio (Can be triggered on page load or when signing in)
+  function showLoader(playAudio = true) {
     const loader = document.getElementById('loadingScreen');
-    const audio = document.getElementById('loadingAudio');
     
     if (loader) {
       loader.classList.remove('fade-out');
     }
     
-    if (audio) {
-      audio.loop = false; 
-      audio.currentTime = 0;
-      audio.play().catch(err => {
-        console.log("Audio autoplay blocked by browser policy until interaction:", err);
-      });
+    if (playAudio) {
+      const audio = document.getElementById('loadingAudio');
+      if (audio) {
+        audio.loop = false; 
+        audio.currentTime = 0;
+        audio.play().catch(err => {
+          console.log("Audio autoplay blocked by browser policy. Will play on first user interaction.");
+          
+          const unlockAudio = () => {
+            audio.play().catch(() => {});
+            window.removeEventListener('click', unlockAudio);
+            window.removeEventListener('keydown', unlockAudio);
+          };
+          window.addEventListener('click', unlockAudio);
+          window.addEventListener('keydown', unlockAudio);
+        });
+      }
     }
   }
 
@@ -1446,6 +1456,7 @@ Use my Invite Code: USER123</textarea>
           console.error("Error fetching pending activation:", err);
         }
 
+        // Everything loaded for the user, close the loader screen
         hideLoader();
       });
     } else {
@@ -1478,11 +1489,15 @@ Use my Invite Code: USER123</textarea>
       }
 
       try {
+        // Show loader without restarting audio when signing in
+        showLoader(false);
+        closeAuthModal();
+
         const firebaseEmail = formatPhoneToFirebaseEmail(phone);
         await signInWithEmailAndPassword(auth, firebaseEmail, password);
-        closeAuthModal();
       } catch (error) {
         console.error("Sign In Error:", error);
+        hideLoader(); // Hide loader if sign-in fails
         alert("Sign In Failed: " + error.message);
       }
     } 
@@ -1519,42 +1534,6 @@ Use my Invite Code: USER123</textarea>
       ctaBtn.className = "btn-main-cta btn-activate";
     }
   };
-
-  // Show Loader & Play Audio ONLY ONCE per browser session
-  function showLoader() {
-    // Check if we already showed the loader in this browser tab session
-    if (sessionStorage.getItem("loaderPlayed") === "true") {
-      const loader = document.getElementById('loadingScreen');
-      if (loader) loader.style.display = 'none'; // Hide immediately if already played
-      return;
-    }
-
-    sessionStorage.setItem("loaderPlayed", "true");
-
-    const loader = document.getElementById('loadingScreen');
-    const audio = document.getElementById('loadingAudio');
-    
-    if (loader) {
-      loader.classList.remove('fade-out');
-    }
-    
-    if (audio) {
-      audio.loop = false; 
-      audio.currentTime = 0;
-      audio.play().catch(err => {
-        console.log("Audio autoplay blocked by browser policy (Standard browser behavior). Will play on first user interaction.");
-        
-        // Optional fallback: Play audio on the user's very first click anywhere on the page
-        const unlockAudio = () => {
-          audio.play().catch(() => {});
-          window.removeEventListener('click', unlockAudio);
-          window.removeEventListener('keydown', unlockAudio);
-        };
-        window.addEventListener('click', unlockAudio);
-        window.addEventListener('keydown', unlockAudio);
-      });
-    }
-  }
 
   function updateProfileModalData(userData) {
     const name = userData.name || "User Name";
@@ -1874,6 +1853,9 @@ Use my Invite Code: USER123</textarea>
     const myNewCode = generateUniqueCode(name);
 
     try {
+      showLoader(false);
+      closeAuthModal();
+
       const userCredential = await createUserWithEmailAndPassword(auth, firebaseEmail, password);
       const newUid = userCredential.user.uid;
 
@@ -1911,9 +1893,9 @@ Use my Invite Code: USER123</textarea>
       }
 
       alert("🎉 Registration successful!");
-      closeAuthModal();
     } catch (error) {
       console.error("Registration Error:", error);
+      hideLoader();
       alert(error.message);
     } finally {
       storedReferrerCode = "";
@@ -1924,8 +1906,6 @@ Use my Invite Code: USER123</textarea>
     try {
       clearInviteListeners();
       await signOut(auth);
-      // window.location.reload() has been removed here so logging out 
-      // won't refresh the page or trigger the loader/audio again.
     } catch (error) {
       console.error("Logout Error:", error);
     }
@@ -1999,8 +1979,8 @@ Use my Invite Code: USER123</textarea>
     }
   };
 
-  // Trigger loader and play audio on initial page load (beginning)
-  showLoader();
+  // Trigger loader and play audio on initial page load
+  showLoader(true);
   updateActivationUI();
 </script>
 </body>
