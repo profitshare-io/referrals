@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profits Share</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 0;
+      color: #1e293b;
+      position: relative;
+    }
+
+    /* LOADING SCREEN STYLING */
+    #loadingScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(135deg, #3730a3 0%, #4f46e5 100%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    #loadingScreen.fade-out {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .loader-logo-container {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .loader-icon {
+      width: 64px;
+      height: 64px;
+      background-color: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    .loader-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .loader-subtitle {
+      font-size: 13px;
+      color: #e0e7ff;
+      opacity: 0.8;
+      margin-top: -10px;
+      margin-bottom: 20px;
+    }
+
+    /* Spinner Animation */
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* Main Dashboard Layout */
+    .card {
+      max-width: 448px;
+      width: 100%;
+      background-color: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      border: 1px solid #f1f5f9;
+      overflow: hidden;
+    }
+
+    /* Top Bar Styling */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #3730a3;
+      padding: 12px 20px;
+      color: #ffffff;
+      position: relative;
+    }
+
+    .top-bar-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    /* Profile Button & Dropdown */
+    .menu-container {
+      position: relative;
+    }
+
+    .profile-btn {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.2s;
+    }
+
+    .profile-btn:hover {
+      background-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .profile-name {
+      font-size: 13px;
+      font-weight: 600;
+      max-width: 160px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .profile-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 36px;
+      background-color: #ffffff;
+      min-width: 150px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .dropdown-content a {
+      padding: 10px 14px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .dropdown-content a.earnings-item { color: #334155; border-bottom: 1px solid #f1f5f9; }
+    .dropdown-content a.earnings-item:hover { background-color: #f8fafc; }
+    .dropdown-content a.logout-item { color: #ef4444; }
+    .dropdown-content a.logout-item:hover { background-color: #fef2f2; }
+
+    .show { display: block; }
+
+    .header {
+      background-color: #4f46e5;
+      padding: 24px;
+      text-align: center;
+      color: #ffffff;
+    }
+
+    .badge {
+      background-color: rgba(99, 102, 241, 0.5);
+      color: #e0e7ff;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      display: inline-block;
+    }
+
+    .header h1 {
+      font-size: 30px;
+      font-weight: 800;
+      margin-top: 12px;
+    }
+
+    .header p {
+      color: #e0e7ff;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .content {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Balance Card */
+    .balance-card {
+      background-color: rgba(238, 242, 255, 0.6);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #e0e7ff;
+    }
+
+    .balance-title {
+      font-size: 12px;
+      color: #4f46e5;
+      font-weight: 600;
+    }
+
+    .balance-amount {
+      font-size: 30px;
+      font-weight: 900;
+      color: #1e1b4b;
+      margin-top: 4px;
+    }
+
+    .label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .status-indicator {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .status-locked {
+      background-color: #fef2f2;
+      color: #ef4444;
+      border: 1px solid #fecaca;
+    }
+
+    .status-unlocked {
+      background-color: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .message-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .textarea-wrapper {
+      position: relative;
+    }
+
+    .textarea-field {
+      width: 100%;
+      height: 120px;
+      background-color: #f8fafc;
+      color: #334155;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      outline: none;
+      resize: none;
+    }
+
+    /* Locked Overlay */
+    .locked-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(3px);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .locked-overlay p {
+      font-size: 12px;
+      font-weight: 700;
+      color: #991b1b;
+    }
+
+    .locked-overlay span {
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    /* Dynamic Buttons */
+    .btn-main-cta {
+      width: 100%;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 14px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-activate {
+      background-color: #dc2626;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    }
+
+    .btn-activate:hover {
+      background-color: #b91c1c;
+    }
+
+    .btn-copy-msg {
+      background-color: #16a34a;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+    }
+
+    .btn-copy-msg:hover {
+      background-color: #15803d;
+    }
+
+    /* FULL-SCREEN ACTIVATION & TRUST OVERLAY */
+    .fullscreen-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #0f172a;
+      z-index: 1000;
+      overflow-y: auto;
+      padding: 20px 16px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .activation-box {
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 440px;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+      position: relative;
+    }
+
+    .close-activation-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: #f1f5f9;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 18px;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Trust Elements */
+    .trust-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .trust-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 8px;
+    }
+
+    .trust-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .trust-subtitle {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    /* Order Summary Card */
+    .order-summary {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .order-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #475569;
+      margin-bottom: 8px;
+    }
+
+    .order-row.total {
+      font-size: 16px;
+      font-weight: 800;
+      color: #0f172a;
+      border-top: 1px dashed #cbd5e1;
+      padding-top: 8px;
+      margin-bottom: 0;
+    }
+
+    /* Payment Buttons & Actions */
+    .btn-pay-continue {
+      width: 100%;
+      background-color: #16a34a;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+      transition: background-color 0.2s;
+    }
+
+    .btn-pay-continue:hover {
+      background-color: #15803d;
+    }
+
+    .secure-text {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 8px;
+      margin-bottom: 20px;
+    }
+
+    /* Manual Activation Toggle Accordion */
+    .manual-accordion {
+      border-top: 1px solid #e2e8f0;
+      padding-top: 16px;
+    }
+
+    .manual-toggle-btn {
+      background: none;
+      border: none;
+      color: #4f46e5;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      text-align: left;
+    }
+
+    .manual-form-section {
+      display: none;
+      margin-top: 14px;
+      background-color: #f8fafc;
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .manual-form-section.active {
+      display: block;
+    }
+
+    .btn-manual-activate {
+      width: 100%;
+      background-color: #3b82f6;
+      color: white;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn-manual-activate:hover {
+      background-color: #2563eb;
+    }
+
+    /* Modal Overlay Styling */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-card {
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      position: relative;
+      max-height: 98vh;       /* Prevents the modal from going off the screen */
+      overflow-y: auto;       /* Adds a vertical scrollbar automatically when content overflows */
+      scrollbar-width: none;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      color: #94a3b8;
+      cursor: pointer;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      font-size: 13px;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 10px 12px;
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .input-field:focus {
+      border-color: #4f46e5;
+    }
+
+    .btn-submit {
+      width: 100%;
+      background-color: #4f46e5;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    .toggle-text {
+      font-size: 13px;
+      text-align: center;
+      margin-top: 16px;
+      color: #64748b;
+    }
+
+    .toggle-text a {
+      color: #4f46e5;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    /* Earnings Modal Toggle Switch */
+    .tab-toggle-container {
+      display: flex;
+      background-color: #f1f5f9;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background-color: #ffffff;
+      color: #4f46e5;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Common List Container Styling */
+    .earnings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background-color: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .item-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .item-sub {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .status-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 9999px;
+    }
+
+    .status-badge.paid { background-color: #dcfce7; color: #166534; }
+    .status-badge.pending { background-color: #fef3c7; color: #92400e; }
+    .status-badge.rejected { background-color: #fef2f2; color: #991b1b; }
+
+    .balance-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eef2f6;
+}
+
+.balance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.balance-label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.balance-amount {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 4px 0 0 0;
+}
+
+/* Payout Badge Styling */
+.payout-schedule-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.payout-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.payout-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #065f46;
+  line-height: 1.1;
+}
+
+.payout-subtitle {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #047857;
+}
+
+.payout-urgency-note {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
+/* Container styling for light-green background & inline layout */
+.payout-urgency-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid #a7f3d0;
+  padding: 8px 14px;
+  border-radius: 20px;
+
+  font-size: 0.82rem;
+  color: #065f46;
+  margin-top: 14px;
+}
+
+/* Ensure pulse dot aligns perfectly inline */
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse 1.8s infinite;
+}
+
+
+
+
+/* Profile Card Container */
+.profile-info-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 12px 0 16px 0;
+}
+
+/* Avatar Circle */
+.profile-avatar {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-details h4 {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* M-Pesa Pill */
+.mpesa-pill-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #e2e8f0;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  width: fit-content;
+}
+
+.mpesa-label {
+  font-weight: 800;
+  color: #16a34a;
+}
+
+.mpesa-text {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mpesa-input {
+  width: 100px;
+  font-size: 0.75rem;
+  padding: 1px 4px;
+  border: 1px solid #16a34a;
+  border-radius: 4px;
+  outline: none;
+}
+
+.mpesa-edit-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0 2px;
+}
+
+
+/* Card Container */
+.profile-info-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Header Row (Avatar + Name) */
+.profile-main-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #2563eb;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.profile-user-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* M-Pesa Block Stacked Below */
+.mpesa-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* Label Top-Left */
+.mpesa-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+/* Number + Button Row Directly Below Label */
+.mpesa-value-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mpesa-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.mpesa-input {
+  font-size: 14px;
+  padding: 4px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  width: 140px;
+}
+
+.mpesa-edit-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px;
+}
+
+  </style>
+</head>
+<body>
+
+  <!-- LOADING PAGE SPLASH SCREEN -->
+  <div id="loadingScreen">
+    <div class="loader-logo-container">
+      <div class="loader-icon">📈</div>
+      <h1 class="loader-title">Profits Share</h1>
+      <p class="loader-subtitle">Loading your earnings platform...</p>
+      <div class="spinner"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <span class="top-bar-title">Profits Share</span>
+      
+      <!-- Profile Button & Dropdown -->
+      <div class="menu-container">
+        <button onclick="handleProfileClick()" class="profile-btn" id="profileBtn">
+          <svg viewBox="0 0 24 24">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span class="profile-name" id="userName">Sign In</span>
+        </button>
+        <div id="dropdownMenu" class="dropdown-content">
+          <a onclick="openEarningsModal('invites')" class="earnings-item">Earnings</a>
+          <a onclick="logoutUser()" class="logout-item">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header Banner -->
+    <div class="header">
+      <span class="badge">Referral Program</span>
+      <h1>Earn KSh 50</h1>
+      <p>For every friend who joins & activates</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+      
+      <!-- Live Balance Card -->
+<!-- Balance Section with Psychological Payout Badge -->
+<div class="balance-card">
+  <div class="balance-header">
+    <div class="balance-info">
+      <span class="balance-label">Available Earnings</span>
+      <h2 class="balance-amount">KSh <span id="userBalance">0.00</span></h2>
+    </div>
+
+    
+  </div>
+
+<!-- Single-Line Green Micro-Copy Banner -->
+<div class="payout-urgency-note">
+  <div class="pulse-dot"></div>
+  <span>Your <strong>Weekly earnings</strong> are paid out every Friday.⚡</span>
+</div>
+</div>
+
+      <!-- Referral Message Container -->
+      <div class="message-container">
+        <div class="label">
+          <span>Your Referral Link & Message</span>
+          <span class="status-indicator status-locked" id="statusIndicator" >🔒 Unactivated</span>
+        </div>
+
+        <div class="textarea-wrapper">
+          <textarea id="refMessage" class="textarea-field" readonly>Hi! 👋 Join Profits Share today and start earning extra income daily. 
+
+Click here to sign up: https://yourwebsite.com/signup
+Use my Invite Code: USER123</textarea>
+
+          <!-- Overlay shown when unactivated -->
+          <div class="locked-overlay" id="lockedOverlay">
+            <p>🔒 Account Not Activated</p>
+            <span>Click below to activate your account and reveal your invite code.</span>
+          </div>
+        </div>
+
+        <!-- Dynamic Action Button -->
+        <button onclick="handleMainAction()" class="btn-main-cta btn-activate" id="mainCtaBtn">
+          ⚡ Activate Now
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FULL-SCREEN HIGH TRUST ACTIVATION SECTION -->
+  <div class="fullscreen-overlay" id="activationOverlay">
+    <div class="activation-box">
+      <button class="close-activation-btn" onclick="closeActivationOverlay()">&times;</button>
+
+      <!-- Trust Header -->
+      <div class="trust-header">
+        <span class="trust-badge">🔒 256-Bit SSL Encrypted</span>
+        <h2 class="trust-title">Activate Account</h2>
+        <p class="trust-subtitle">Unlock instant earnings & your referral link for 30 days</p>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary">
+        <div class="order-row">
+          <span>Item</span>
+          <span>Monthly Account Activation (30 Days)</span>
+        </div>
+        <div class="order-row">
+          <span>Referral Commission Access</span>
+          <span>100% Direct</span>
+        </div>
+        <div class="order-row total">
+          <span>Total Amount</span>
+          <span>KSh 100 / month</span>
+        </div>
+      </div>
+
+      <!-- Primary Action: Continue to Payment -->
+      <button onclick="goToPayplusPayment()" class="btn-pay-continue">
+        <span>🔒 Continue to Payment (KSh 100)</span>
+      </button>
+
+      <div class="secure-text">
+        <span>✓ Powered by Payplus</span> • <span>Instant Activation</span>
+      </div>
+
+<!-- Fallback / Manual Activation Section -->
+      <div class="manual-accordion">
+        <button onclick="toggleManualSection()" class="manual-toggle-btn">
+          <span>Paid but not activated? Activate Manually</span>
+          <span id="accordionArrow">▼</span>
+        </button>
+
+        <div class="manual-form-section" id="manualFormSection">
+          <div class="form-group">
+            <label class="label">Phone Number Used for Payment</label>
+            <input type="tel" id="paidPhoneNumber" class="input-field" placeholder="e.g. 0712345678" />
+          </div>
+
+          <!-- Status Display Element right above the button -->
+          <div id="manualStatusDisplay" style="margin: 10px 0; font-size: 14px; font-weight: 600; color: #d97706; display: none;"></div>
+
+          <button onclick="submitManualActivation()" class="btn-manual-activate">
+            Verify & Activate Now
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Sign In / Sign Up Modal -->
+  <div id="authModal" class="modal-overlay">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeAuthModal()">&times;</button>
+      
+      <h2 id="modalTitle" class="modal-title">Welcome Back</h2>
+      <p id="modalSubtitle" class="modal-subtitle">Sign in to view your referral earnings</p>
+
+      <form id="authForm" onsubmit="handleAuthSubmit(event)">
+        <!-- STEP 1: Invite Code Field -->
+        <div class="form-group" id="inviteCodeGroup" style="display: none;">
+          <label class="label">Invite Code</label>
+          <input type="text" id="authInviteCode" class="input-field" placeholder="Enter Invite Code (e.g. USER123)" />
+        </div>
+
+        <!-- STEP 2: Details Fields -->
+        <div id="detailsGroup">
+          <div class="form-group" id="fullNameGroup" style="display: none;">
+            <label class="label">Full Name</label>
+            <input type="text" id="authName" class="input-field" placeholder="Jane Doe" />
+          </div>
+
+          <!-- Phone Number Input -->
+          <div class="form-group">
+            <label class="label">Phone Number</label>
+            <input type="tel" id="authPhone" class="input-field" placeholder="0712345678" />
+          </div>
+
+          <div class="form-group">
+            <label class="label">Password</label>
+            <input type="password" id="authPassword" class="input-field" placeholder="••••••••" />
+          </div>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn-submit">Sign In</button>
+      </form>
+
+      <p class="toggle-text" id="toggleModeText">
+        Don't have an account? <a onclick="openAuthModal('signup-step1')">Sign Up</a>
+      </p>
+    </div>
+  </div>
+
+<!-- Unified Earnings & Profile Modal -->
+  <div id="earningsModal" class="modal-overlay">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeEarningsModal()">&times;</button>
+      
+      <h2 class="modal-title">Earnings & Profile</h2>
+      <p class="modal-subtitle">Track your referred friends, payouts, and payout details</p>
+
+<!-- Profile Info Section -->
+<div class="profile-info-card">
+  <!-- Top Row: Avatar & Name -->
+  <div class="profile-main-header">
+    <div class="profile-avatar" id="modalAvatar">U</div>
+    <h4 id="modalUserName" class="profile-user-name">User Name</h4>
+  </div>
+
+  <!-- Bottom Block: M-Pesa Info Stacked Below -->
+  <div class="mpesa-section">
+    <span class="mpesa-label">M-Pesa Number</span>
+    <div class="mpesa-value-row">
+      <span id="mpesaDisplay" class="mpesa-text">07XXXXXXXX</span>
+      <input type="tel" id="mpesaInput" class="mpesa-input" placeholder="0712345678" style="display: none;" />
+      <button id="btnEditMpesa" class="mpesa-edit-btn" onclick="toggleMpesaEdit()">✏️</button>
+    </div>
+  </div>
+</div>
+
+      <!-- Toggle Switch for Invites vs Payouts -->
+      <div class="tab-toggle-container">
+        <button id="tabInvites" class="tab-btn active" onclick="switchEarningsTab('invites')">Invites</button>
+        <button id="tabPayouts" class="tab-btn" onclick="switchEarningsTab('payouts')">Payouts</button>
+      </div>
+
+      <!-- Invites List Section -->
+      <div class="earnings-list" id="invitesTabContent">
+        <div class="list-item">
+          <div class="item-info">
+            <span class="item-title">John Kamau</span>
+            <span class="item-sub">Joined: 2 hours ago</span>
+          </div>
+          <span class="status-badge paid">+KSh 50</span>
+        </div>
+
+        <div class="list-item">
+          <div class="item-info">
+            <span class="item-title">Mary Wanjiku</span>
+            <span class="item-sub">Joined: Yesterday</span>
+          </div>
+          <span class="status-badge paid">+KSh 50</span>
+        </div>
+
+        <div class="list-item">
+          <div class="item-info">
+            <span class="item-title">David Ochieng</span>
+            <span class="item-sub">Joined: 3 days ago</span>
+          </div>
+          <span class="status-badge pending">Pending Activation</span>
+        </div>
+      </div>
+
+      <!-- Payouts List Section -->
+      <div class="earnings-list" id="payoutsTabContent" style="display: none;">
+        <div class="list-item">
+          <div class="item-info">
+            <span class="item-title">Weekly Friday Payout</span>
+            <span class="item-sub">Today • M-Pesa</span>
+          </div>
+          <span class="status-badge paid">KSh 100 Paid</span>
+        </div>
+
+        <div class="list-item">
+          <div class="item-info">
+            <span class="item-title">Weekly Friday Payout</span>
+            <span class="item-sub">Yesterday • M-Pesa</span>
+          </div>
+          <span class="status-badge pending">KSh 150 Pending</span>
+        </div>
+
+        <div class="list-item">
+          <div class="item-info">
+            <span class="item-title">Weekly Friday Payout</span>
+            <span class="item-sub">2026-03-01 • M-Pesa</span>
+          </div>
+          <span class="status-badge rejected">KSh 50 Rejected</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { 
+    getAuth, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword, 
+    signOut, 
+    onAuthStateChanged 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { 
+    getDatabase, 
+    ref, 
+    get, 
+    set, 
+    update, 
+    onValue, 
+    serverTimestamp 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgWcu_0cQnv_4ltqeo037xA4jbhkTna20",
+    authDomain: "profits-share.firebaseapp.com",
+    databaseURL: "https://profits-share-default-rtdb.firebaseio.com",
+    projectId: "profits-share",
+    storageBucket: "profits-share.firebasestorage.app",
+    messagingSenderId: "138491671189",
+    appId: "1:138491671189:web:adac95f54ab26835d8e19c",
+    measurementId: "G-28ZS15KEFJ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  let isActivated = false;
+  let isLoggedIn = false;
+  let currentMode = 'signin';
+  let currentUserId = null;
+  let storedReferrerCode = "";
+  let inviteListeners = [];
+
+  function hideLoader() {
+    const loader = document.getElementById('loadingScreen');
+    if (loader) {
+      loader.classList.add('fade-out');
+    }
+  }
+
+  function clearInviteListeners() {
+    inviteListeners.forEach(unsubscribe => unsubscribe());
+    inviteListeners = [];
+  }
+
+  function truncateWords(str, maxWords = 5, maxCharsPerWord = 15) {
+    if (!str) return '';
+    str = str.trim();
+    const words = str.split(/\s+/);
+    if (words.length === 1 && str.length > maxCharsPerWord) {
+      return str.substring(0, maxCharsPerWord) + '..';
+    }
+    if (words.length > maxWords) {
+      return words.slice(0, maxWords).join(' ') + '..';
+    }
+    return str;
+  }
+
+  function formatPhoneToFirebaseEmail(phone) {
+    const cleanPhone = phone.replace(/\D/g, ''); 
+    return `${cleanPhone}@profits-share.app`;
+  }
+
+  function generateUniqueCode(name) {
+    const prefix = name ? name.toUpperCase().replace(/[^A-Z]/g, '').substring(0, 4) : "USER";
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}${randomNum}`;
+  }
+
+  // Real-time Authentication & Profile State Watcher
+// Real-time Authentication & Profile State Watcher
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      currentUserId = user.uid;
+      const userRef = ref(db, `users/${currentUserId}`);
+      
+      onValue(userRef, async (snapshot) => { // Added async here
+        if (snapshot.exists()) {
+          const userData = snapshot.val();
+          
+          // 1. Read 'isActivated' dynamically from Firebase Database
+          isActivated = Boolean(userData.isActivated);
+          
+          // 2. Update UI elements according to Firebase status
+          setLoggedInUserReal(userData.name, userData.balance, userData.myCode);
+          updateActivationUI(isActivated);
+
+          // Sync Profile Card details inside Earnings Modal
+          updateProfileModalData(userData);
+
+          // Render Live Invites
+          const invitesArr = userData.invites ? Object.values(userData.invites) : [];
+          renderInvitesList(invitesArr);
+          
+          // Render Live Payouts
+          const payoutsArr = userData.payouts ? Object.values(userData.payouts) : [];
+          renderPayoutsList(payoutsArr);
+        }
+        
+        // ---> CHECK FOR PENDING ACTIVATION ON RELOAD <---
+        try {
+          const requestSnap = await get(ref(db, `activationRequests/${currentUserId}`));
+          if (requestSnap.exists()) {
+            const requestData = requestSnap.val();
+            if (requestData.status === "Pending" && requestData.paidPhone) {
+              const statusDisplay = document.getElementById("manualStatusDisplay");
+              if (statusDisplay) {
+                statusDisplay.innerText = `${requestData.paidPhone} pending for activation`;
+                statusDisplay.style.display = "block";
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching pending activation:", err);
+        }
+
+        hideLoader();
+      });
+    } else {
+      currentUserId = null;
+      isLoggedIn = false;
+      isActivated = false;
+      setLoggedInUserReal(null, 0, null);
+      updateActivationUI(false);
+      
+      // Clear status display on logout/reload if logged out
+      const statusDisplay = document.getElementById("manualStatusDisplay");
+      if (statusDisplay) {
+        statusDisplay.style.display = "none";
+        statusDisplay.innerText = "";
+      }
+
+      hideLoader();
+    }
+  });
+
+  // Updated Activation UI Function (Accepts status directly from Firebase)
+  window.updateActivationUI = function(activeStatus) {
+    if (typeof activeStatus === 'boolean') {
+      isActivated = activeStatus;
+    }
+
+    const lockedOverlay = document.getElementById("lockedOverlay");
+    const statusIndicator = document.getElementById("statusIndicator");
+    const ctaBtn = document.getElementById("mainCtaBtn");
+
+    if (!lockedOverlay || !statusIndicator || !ctaBtn) return;
+
+    if (isActivated) {
+      lockedOverlay.style.display = "none";
+      statusIndicator.innerText = "✓ Active";
+      statusIndicator.className = "status-indicator status-unlocked";
+      ctaBtn.innerText = "📋 Copy Message";
+      ctaBtn.className = "btn-main-cta btn-copy-msg";
+    } else {
+      lockedOverlay.style.display = "flex";
+      statusIndicator.innerText = "🔒 Unactivated";
+      statusIndicator.className = "status-indicator status-locked";
+      ctaBtn.innerText = "⚡ Activate Now";
+      ctaBtn.className = "btn-main-cta btn-activate";
+    }
+  };
+
+  // Populate Profile Modal
+  function updateProfileModalData(userData) {
+    const name = userData.name || "User Name";
+    const mpesa = userData.mpesaNumber || "Not set";
+
+    const modalNameEl = document.getElementById("modalUserName");
+    const modalAvatarEl = document.getElementById("modalAvatar");
+    const mpesaDisplayEl = document.getElementById("mpesaDisplay");
+
+    if (modalNameEl) modalNameEl.innerText = name;
+    if (modalAvatarEl) modalAvatarEl.innerText = name.charAt(0).toUpperCase();
+    if (mpesaDisplayEl) mpesaDisplayEl.innerText = mpesa;
+  }
+
+  // Toggle Edit Mode & Save M-Pesa Number to Realtime Database
+  window.toggleMpesaEdit = async function() {
+    const displayEl = document.getElementById('mpesaDisplay');
+    const inputEl = document.getElementById('mpesaInput');
+    const btnEl = document.getElementById('btnEditMpesa');
+
+    if (!currentUserId) {
+      alert("Please sign in to update your M-Pesa number.");
+      return;
+    }
+
+    if (inputEl.style.display === 'none') {
+      inputEl.value = displayEl.innerText !== 'Not set' ? displayEl.innerText : '';
+      displayEl.style.display = 'none';
+      inputEl.style.display = 'inline-block';
+      inputEl.focus();
+      btnEl.innerText = '💾';
+    } else {
+      const newMpesa = inputEl.value.trim();
+
+      if (!newMpesa || newMpesa.length < 10) {
+        alert("Please enter a valid M-Pesa phone number.");
+        return;
+      }
+
+      try {
+        btnEl.innerText = '⏳';
+        
+        await update(ref(db, `users/${currentUserId}`), {
+          mpesaNumber: newMpesa
+        });
+
+        displayEl.innerText = newMpesa;
+        inputEl.style.display = 'none';
+        displayEl.style.display = 'inline-block';
+        btnEl.innerText = '✏️';
+        
+        alert("M-Pesa number saved successfully!");
+      } catch (error) {
+        alert("Error saving M-Pesa number: " + error.message);
+        btnEl.innerText = '💾';
+      }
+    }
+  };
+
+  // Render Payouts List
+  function renderPayoutsList(payoutsArray) {
+    const payoutsTabContent = document.getElementById("payoutsTabContent");
+    if (!payoutsTabContent) return;
+
+    if (!payoutsArray || payoutsArray.length === 0) {
+      payoutsTabContent.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">No payout history yet.</p>`;
+      return;
+    }
+
+    let html = "";
+    [...payoutsArray].reverse().forEach(payout => {
+      const isApproved = payout.status === 'Approved' || payout.status === 'Paid';
+      html += `
+        <div class="list-item">
+          <div class="item-info">
+            <span class="item-title">Weekly Friday Payout</span>
+            <span class="item-sub">Date: ${payout.date || 'Today'}</span>
+          </div>
+          <div style="text-align: right;">
+            <span style="font-weight: 800; font-size: 14px; color: #0f172a;">KSh ${payout.amount}</span><br/>
+            <span class="status-badge ${isApproved ? 'paid' : 'pending'}">${payout.status}</span>
+          </div>
+        </div>
+      `;
+    });
+    payoutsTabContent.innerHTML = html;
+  }
+
+  window.handleProfileClick = function() {
+    if (!isLoggedIn) {
+      openAuthModal('signin');
+    } else {
+      toggleMenu();
+    }
+  };
+
+  window.handleMainAction = function() {
+    if (!isActivated) {
+      openActivationOverlay();
+    } else {
+      const messageText = document.getElementById("refMessage");
+      if (messageText) {
+        messageText.select();
+        messageText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(messageText.value);
+        alert("📋 Referral message copied! Share it with friends to start earning.");
+      }
+    }
+  };
+
+  window.openActivationOverlay = function() {
+    document.getElementById("activationOverlay").style.display = "flex";
+  };
+
+  window.closeActivationOverlay = function() {
+    document.getElementById("activationOverlay").style.display = "none";
+  };
+
+  window.goToPayplusPayment = function() {
+    window.open("https://payplus.link/your-payment-link", "_blank");
+  };
+
+  window.toggleManualSection = function() {
+    const formSection = document.getElementById("manualFormSection");
+    const arrow = document.getElementById("accordionArrow");
+    if (formSection.classList.contains("active")) {
+      formSection.classList.remove("active");
+      arrow.innerText = "▼";
+    } else {
+      formSection.classList.add("active");
+      arrow.innerText = "▲";
+    }
+  };
+
+window.submitManualActivation = async function() {
+    const paidPhone = document.getElementById("paidPhoneNumber").value.trim();
+    
+    if (!paidPhone || paidPhone.length < 10) {
+      alert("Please enter a valid phone number used during payment.");
+      return;
+    }
+
+    if (!currentUserId) {
+      alert("Please log in first to submit an activation request.");
+      return;
+    }
+
+    try {
+      const userSnap = await get(ref(db, `users/${currentUserId}`));
+      
+      if (!userSnap.exists()) {
+        alert("User profile not found. Please re-login.");
+        return;
+      }
+
+      const userData = userSnap.val();
+
+      if (userData.isActivated) {
+        alert("Your account is already activated!");
+        closeActivationOverlay();
+        return;
+      }
+
+      const requestRef = ref(db, `activationRequests/${currentUserId}`);
+      
+await set(requestRef, {
+        uid: currentUserId,
+        userName: userData.name || "N/A",
+        userPhone: userData.phone || "N/A",
+        paidPhone: paidPhone,
+        userCode: userData.myCode || "N/A",
+        status: "Pending",
+        requestedAt: new Date().toISOString()
+      });
+
+      // ---> DISPLAY THE ENTERED NUMBER IMMEDIATELY <---
+      const statusDisplay = document.getElementById("manualStatusDisplay");
+      if (statusDisplay) {
+        statusDisplay.innerText = `${paidPhone} pending for activation`;
+        statusDisplay.style.display = "block";
+      }
+
+      alert(`⚡ Activation request submitted for ${paidPhone}! An admin will review and activate your account shortly.`);
+    } catch (error) {
+      console.error("Error submitting activation request:", error);
+      alert("Failed to submit activation request: " + error.message);
+    }
+  };
+
+  window.toggleMenu = function() {
+    document.getElementById("dropdownMenu").classList.toggle("show");
+  };
+
+  window.openAuthModal = function(mode) {
+    currentMode = mode;
+    document.getElementById("dropdownMenu").classList.remove("show");
+    document.getElementById("authModal").style.display = "flex";
+
+    const title = document.getElementById("modalTitle");
+    const subtitle = document.getElementById("modalSubtitle");
+    const inviteCodeGroup = document.getElementById("inviteCodeGroup");
+    const detailsGroup = document.getElementById("detailsGroup");
+    const fullNameGroup = document.getElementById("fullNameGroup");
+    const submitBtn = document.getElementById("submitBtn");
+    const toggleText = document.getElementById("toggleModeText");
+    const phoneInput = document.getElementById("authPhone");
+    const passwordInput = document.getElementById("authPassword");
+
+    if (mode === 'signup-step1') {
+      title.innerText = "Enter Invite Code";
+      subtitle.innerText = "Please enter your friend's invite code to join";
+      inviteCodeGroup.style.display = "block";
+      detailsGroup.style.display = "none";
+      phoneInput.required = false;
+      passwordInput.required = false;
+      submitBtn.innerText = "Continue";
+      toggleText.innerHTML = 'Already have an account? <a onclick="openAuthModal(\'signin\')">Sign In</a>';
+    } 
+    else if (mode === 'signup-step2') {
+      title.innerText = "Activate Account";
+      subtitle.innerText = "Complete registration to unlock your referral link";
+      inviteCodeGroup.style.display = "none";
+      detailsGroup.style.display = "block";
+      fullNameGroup.style.display = "block";
+      phoneInput.required = true;
+      passwordInput.required = true;
+      submitBtn.innerText = "Register Account Now";
+      toggleText.innerHTML = 'Already have an account? <a onclick="openAuthModal(\'signin\')">Sign In</a>';
+    } 
+    else {
+      title.innerText = "Welcome Back";
+      subtitle.innerText = "Sign in to view your referral earnings";
+      inviteCodeGroup.style.display = "none";
+      detailsGroup.style.display = "block";
+      fullNameGroup.style.display = "none";
+      phoneInput.required = true;
+      passwordInput.required = true;
+      submitBtn.innerText = "Sign In";
+      toggleText.innerHTML = 'Don\'t have an account? <a onclick="openAuthModal(\'signup-step1\')">Sign Up</a>';
+    }
+  };
+
+  window.closeAuthModal = function() {
+    document.getElementById("authModal").style.display = "none";
+  };
+
+  window.openEarningsModal = function(defaultTab = 'invites') {
+    document.getElementById("dropdownMenu").classList.remove("show");
+    switchEarningsTab(defaultTab);
+    document.getElementById("earningsModal").style.display = "flex";
+  };
+
+  window.closeEarningsModal = function() {
+    document.getElementById("earningsModal").style.display = "none";
+  };
+
+  window.switchEarningsTab = function(tabName) {
+    const tabInvites = document.getElementById("tabInvites");
+    const tabPayouts = document.getElementById("tabPayouts");
+    const invitesContent = document.getElementById("invitesTabContent");
+    const payoutsContent = document.getElementById("payoutsTabContent");
+
+    if (tabName === 'invites') {
+      tabInvites.classList.add("active");
+      tabPayouts.classList.remove("active");
+      invitesContent.style.display = "flex";
+      payoutsContent.style.display = "none";
+    } else {
+      tabPayouts.classList.add("active");
+      tabInvites.classList.remove("active");
+      invitesContent.style.display = "none";
+      payoutsContent.style.display = "flex";
+    }
+  };
+
+  async function checkInviterCode() {
+    const inviteCodeInput = document.getElementById("authInviteCode").value.trim().toUpperCase();
+    if (!inviteCodeInput) {
+      alert("Please enter a valid invite code.");
+      return;
+    }
+
+    try {
+      const codeRef = ref(db, `codes/${inviteCodeInput}`);
+      let snapshot = await get(codeRef);
+
+      if (!snapshot.exists() && inviteCodeInput === "USER0001") {
+        await set(codeRef, {
+          code: "USER0001",
+          userId: "SYSTEM_ROOT",
+          createdAt: serverTimestamp()
+        });
+        snapshot = await get(codeRef);
+      }
+
+      if (!snapshot.exists()) {
+        alert("❌ Invalid Invite Code! Every user must register using a valid invite code.");
+        return;
+      }
+
+      storedReferrerCode = inviteCodeInput;
+      openAuthModal('signup-step2');
+    } catch (error) {
+      console.error("Error checking code:", error);
+      alert("Error verifying code. Please check your connection.");
+    }
+  }
+
+  async function handleFinalRegistration() {
+    const phone = document.getElementById("authPhone").value.trim();
+    const name = document.getElementById("authName").value.trim();
+    const password = document.getElementById("authPassword").value.trim();
+
+    if (!phone || !name || !password) {
+      alert("Please fill in all details.");
+      return;
+    }
+
+    const firebaseEmail = formatPhoneToFirebaseEmail(phone);
+    const myNewCode = generateUniqueCode(name);
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, firebaseEmail, password);
+      const newUid = userCredential.user.uid;
+
+      await set(ref(db, `users/${newUid}`), {
+        uid: newUid,
+        name: name,
+        phone: phone,
+        mpesaNumber: phone,
+        balance: 0,
+        myCode: myNewCode,
+        referrerCode: storedReferrerCode,
+        isActivated: false,
+        invites: {},
+        createdAt: serverTimestamp()
+      });
+
+      await set(ref(db, `codes/${myNewCode}`), {
+        code: myNewCode,
+        userId: newUid,
+        createdAt: serverTimestamp()
+      });
+
+      if (storedReferrerCode && storedReferrerCode !== "USER0001") {
+        const referrerCodeSnap = await get(ref(db, `codes/${storedReferrerCode}`));
+        if (referrerCodeSnap.exists()) {
+          const referrerUid = referrerCodeSnap.val().userId;
+          const newInviteRef = ref(db, `users/${referrerUid}/invites/${newUid}`);
+
+          await set(newInviteRef, {
+            name: name,
+            joinedAt: new Date().toLocaleDateString(),
+            status: "Pending Activation"
+          });
+        }
+      }
+
+      alert("🎉 Registration successful!");
+      closeAuthModal();
+    } catch (error) {
+      console.error("Registration Error:", error);
+      alert(error.message);
+    } finally {
+      storedReferrerCode = "";
+    }
+  }
+
+
+
+  window.logoutUser = async function() {
+    try {
+      clearInviteListeners();
+      await signOut(auth);
+      document.getElementById("dropdownMenu").classList.remove("show");
+      updateProfileModalData({ name: "User Name", mpesaNumber: "Not set" });
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  };
+
+  function setLoggedInUserReal(name, balance, code) {
+    const refMessageEl = document.getElementById('refMessage');
+
+    if (name) {
+      isLoggedIn = true;
+      document.getElementById('userName').innerText = truncateWords(name, 5);
+      document.getElementById('userBalance').innerText = balance || 0;
+
+      // Dynamically update the referral message box with the user's actual code
+      if (refMessageEl) {
+        const userCodeToUse = code || 'YOUR_CODE';
+        refMessageEl.value = `Hi! 👋 Join Profits Share today and start earning extra income daily. \n\nClick here to sign up: https://profits-share.web.app/signup\nUse my Invite Code: ${userCodeToUse}`;
+      }
+    } else {
+      isLoggedIn = false;
+      document.getElementById('userName').innerText = 'Sign In';
+      document.getElementById('userBalance').innerText = '0';
+      isActivated = false;
+
+      // Reset textarea placeholder if logged out
+      if (refMessageEl) {
+        refMessageEl.value = `Hi! 👋 Join Profits Share today and start earning extra income daily. \n\nClick here to sign up: https://profits-share.web.app/signup\nUse my Invite Code: USER123`;
+      }
+    }
+    updateActivationUI();
+  }
+
+  function renderInvitesList(invitesArray) {
+    const invitesTabContent = document.getElementById("invitesTabContent");
+    if (!invitesTabContent) return;
+
+    if (!invitesArray || invitesArray.length === 0) {
+      invitesTabContent.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">No invites yet.</p>`;
+      return;
+    }
+
+    let html = "";
+    invitesArray.forEach(inv => {
+      const isPaid = inv.status === 'Paid';
+      html += `
+        <div class="list-item">
+          <div class="item-info">
+            <span class="item-title">${inv.name}</span>
+            <span class="item-sub">Joined: ${inv.joinedAt}</span>
+          </div>
+          <span class="status-badge ${isPaid ? 'paid' : 'pending'}">${inv.status}</span>
+        </div>
+      `;
+    });
+    invitesTabContent.innerHTML = html;
+  }
+
+  window.onclick = function(event) {
+    if (!event.target.closest('.profile-btn')) {
+      const dropdowns = document.getElementsByClassName("dropdown-content");
+      for (let i = 0; i < dropdowns.length; i++) {
+        let openDropdown = dropdowns[i];
+        if (openDropdown.classList.contains('show')) {
+          openDropdown.classList.remove('show');
+        }
+      }
+    }
+    if (event.target === document.getElementById('authModal')) {
+      closeAuthModal();
+    }
+    if (event.target === document.getElementById('earningsModal')) {
+      closeEarningsModal();
+    }
+  };
+
+  updateActivationUI();
+</script>
+</body>
+</html>
