@@ -1022,9 +1022,6 @@
   </style>
 </head>
 <body>
-<audio id="loadingAudio" loop>
-  <source src="prism-at-dawn_nz93e9EZ.mp3" type="audio/mpeg">
-</audio>
   <!-- LOADING PAGE SPLASH SCREEN -->
   <div id="loadingScreen">
     <div class="loader-logo-container">
@@ -1350,38 +1347,18 @@ Use my Invite Code: USER123</textarea>
   let storedReferrerCode = "";
   let inviteListeners = [];
 
-  // Show Loader & Play Audio (Can be triggered on page load or when signing in)
-  function showLoader(playAudio = true) {
+  // Show Loader (Only visual loading screen, no audio)
+  function showLoader() {
     const loader = document.getElementById('loadingScreen');
-    
     if (loader) {
       loader.classList.remove('fade-out');
-    }
-    
-    if (playAudio) {
-      const audio = document.getElementById('loadingAudio');
-      if (audio) {
-        audio.loop = false; 
-        audio.currentTime = 0;
-        audio.play().catch(err => {
-          console.log("Audio autoplay blocked by browser policy. Will play on first user interaction.");
-          
-          const unlockAudio = () => {
-            audio.play().catch(() => {});
-            window.removeEventListener('click', unlockAudio);
-            window.removeEventListener('keydown', unlockAudio);
-          };
-          window.addEventListener('click', unlockAudio);
-          window.addEventListener('keydown', unlockAudio);
-        });
-      }
+      loader.style.display = 'flex';
     }
   }
 
-  // Hide Loader ONLY (Leaves audio playing until it finishes naturally)
+  // Hide Loader
   function hideLoader() {
     const loader = document.getElementById('loadingScreen');
-    
     if (loader) {
       loader.classList.add('fade-out');
     }
@@ -1456,7 +1433,7 @@ Use my Invite Code: USER123</textarea>
           console.error("Error fetching pending activation:", err);
         }
 
-        // Everything loaded for the user, close the loader screen
+        // Everything loaded, close the loader screen
         hideLoader();
       });
     } else {
@@ -1489,15 +1466,15 @@ Use my Invite Code: USER123</textarea>
       }
 
       try {
-        // Show loader without restarting audio when signing in
-        showLoader(false);
+        // Show loader when signing in
+        showLoader();
         closeAuthModal();
 
         const firebaseEmail = formatPhoneToFirebaseEmail(phone);
         await signInWithEmailAndPassword(auth, firebaseEmail, password);
       } catch (error) {
         console.error("Sign In Error:", error);
-        hideLoader(); // Hide loader if sign-in fails
+        hideLoader();
         alert("Sign In Failed: " + error.message);
       }
     } 
@@ -1853,7 +1830,7 @@ Use my Invite Code: USER123</textarea>
     const myNewCode = generateUniqueCode(name);
 
     try {
-      showLoader(false);
+      showLoader();
       closeAuthModal();
 
       const userCredential = await createUserWithEmailAndPassword(auth, firebaseEmail, password);
@@ -1979,8 +1956,8 @@ Use my Invite Code: USER123</textarea>
     }
   };
 
-  // Trigger loader and play audio on initial page load
-  showLoader(true);
+  // Trigger loader on initial page load
+  showLoader();
   updateActivationUI();
 </script>
 </body>
